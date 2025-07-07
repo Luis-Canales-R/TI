@@ -1,0 +1,179 @@
+@startuml
+!theme plain
+title "Proceso Unificado y Real de Pagos a Pacientes (Fijos y Variables)"
+skinparam titleFontSize 22
+skinparam swimlane {
+    ArrowColor #333333
+    BackgroundColor #WhiteSmoke
+}
+skinparam activity {
+    ArrowColor #333333
+    BorderColor #333333
+    BackgroundColor #White
+}
+skinparam note {
+    BorderColor #666666
+}
+
+' Definición global de los carriles (swimlanes)
+|#LightBlue|Paciente|
+|#AliceBlue|Xpendit / WhatsApp|
+|#Beige|Aprobadores\n(Coord. / Finanzas)|
+|#LightGreen|Logística|
+|#LightPink|Pagos\n(Guillermo / Lucas)|
+|#Gainsboro|Sistemas / Herramientas\n(SAP / Macros Excel)|
+
+' Los dos flujos de origen ocurren en PARALELO
+fork
+    group Flujo de Reembolsos VARIABLES (por Gasto Directo)
+        |Paciente|
+        :Sube foto de la boleta;
+        |Xpendit / WhatsApp|
+        :IA extrae datos (con ~5% de error);
+        :Notifica a Paciente "Recibido";
+        note right #FDFD96
+            **Clasificación inicial:**
+            El paciente indica vía WhatsApp si es
+            Gasto de Medicamento -> Ruta a Finanzas
+            Gasto de Traslado/Alojamiento -> Ruta a Coordinación
+        end note
+        |Aprobadores\n(Coord. / Finanzas)|
+        :Recibe notificación de gasto nuevo;
+        :Corrige datos extraídos por la IA\n(monto, fecha, etc.);
+        
+        if ("Si la información es insuficiente o dudosa?") then (sí)
+            note left #FFCCCC
+                **PUNTO DE FRICCIÓN CRÍTICO**
+                **El 'Matching' Manual Persiste:**
+                - El Aprobador **SALE de Xpendit**.
+                - Busca la **Ficha de Papel** del paciente.
+                - **Problema:** La ficha puede estar en uso,
+                  perdida o no disponible.
+                - Corrobora fecha de visita/EA y que el gasto sea lógico.
+            end note
+        endif
+        
+        if (Gasto Aprobado?) is (no) then
+            '-- Rama IZQUIERDA: Condición "no" --
+            |Aprobadores\n(Coord. / Finanzas)|
+            :Rechaza el gasto en Xpendit;
+            |Xpendit / WhatsApp|
+            :Notifica a Paciente "Rechazado";
+            ' Esta instrucción detiene el flujo en esta rama
+            stop
+        else (sí,)
+            '-- Rama DERECHA: Condición "sí," --
+            |Aprobadores\n(Coord. / Finanzas)|
+            :Aprueba el gasto en Xpendit;
+            note right: La lista de gastos aprobados\nqueda disponible en Xpendit\npara ser exportada por Pagos.
+        endif
+    end group
+
+fork again
+
+    group Flujo de Viáticos FIJOS (por Visita a Clínica)
+        |Paciente|
+        :Realiza visita a la clínica;
+        |Logística|
+        :Recibe información de la visita\n(programada o no programada);
+        note right #FDFD96
+            **Proceso 100% Manual y Ciego:**
+            - No usa Xpendit.
+            - Se basa en calendarios propios (Excel).
+            - No hay validación cruzada hasta el pago.
+        end note
+        :Prepara una lista de pagos de viáticos fijos;
+        
+        |Sistemas / Herramientas\n(SAP / Macros Excel)|
+        :Logística usa **su propia copia**\nde la "Macro de Pago" en Excel;
+        note right #FFCCCC
+         **¡ALERTA DE RIESGO: HERRAMIENTAS DUPLICADAS!**
+         Existen dos versiones de la misma Macro,
+         una en Finanzas y otra en Logística.
+         Esto genera problemas de mantenimiento,
+         actualización y consistencia de datos de pacientes.
+        end note
+        :La macro de Logística genera\n un archivo de pago (TXT) para Fijos;
+
+        |Logística|
+        :Envía el archivo TXT a Guillermo;
+    end group
+
+end fork
+
+' --- CONVERGENCIA: Aquí se unen ambos flujos para el proceso de pago ---
+group "Fase de Pago: El Ritual de Consolidación y Pago"
+    |Pagos\n(Guillermo / Lucas)|
+    :**1. Preparación de Nómina (Guillermo)**;
+    :a) Exporta lista de Xpendit (Variables);
+    :b) Recibe archivo TXT de Logística (Fijos);
+    note right #FFCCCC
+        **¡PUNTO CIEGO!**
+        La lista de Viáticos Fijos
+        no se revisa, solo se procesa
+        para pago. Confianza ciega
+        en el archivo de Logística.
+    end note
+    :c) Imprime y revisa **SOLO** la lista de Xpendit;
+
+    if ("¿El paciente es nuevo?") then (sí)
+        :Solicita datos completos a **Logística**;
+        |Logística|
+        :Busca datos. Si no los tiene,\nlos solicita al Paciente;
+        |Paciente|
+        :Envía su información a Logística;
+        |Logística|
+        :Reenvía los datos a Pagos;
+        |Sistemas / Herramientas\n(SAP / Macros Excel)|
+        note left #FFCCCC
+            **¡ALERTA DE INEFICIENCIA: 4 BASES DE DATOS!**
+            El paciente ahora existe en:
+            1. **Xpendit:** (incompleto)
+            2. **Coordinación:** (Fuente original)
+            3. **SAP (ERP):** Se crea manualmente.
+            4. **Macro del Banco:** Se crea manualmente.
+        end note
+        :Guillermo REGISTRA NUEVO PACIENTE en **SAP**;
+        :Guillermo REGISTRA NUEVO PACIENTE en **Macro del Banco**;
+    endif
+    
+    |Sistemas / Herramientas\n(SAP / Macros Excel)|
+    :Guillermo re-digita los gastos variables en **SAP**;
+    
+    |Pagos\n(Guillermo / Lucas)|
+    :**2. Aprobación Interna (Lucas)**;
+    :Guillermo envía la **nómina** consolidada\npara pago a Lucas por correo;
+    :Lucas la acepta / aprueba;
+
+    :**3. Generación del Archivo de Pago (Guillermo)**;
+    |Sistemas / Herramientas\n(SAP / Macros Excel)|
+    :Guillermo, **tras la aprobación**, usa la\n**Macro del Banco** para generar el archivo TXT;
+    note right: Dicho archivo contiene la nómina\ny la fecha de pago autorizada.
+    
+    |Pagos\n(Guillermo / Lucas)|
+    :Espera la confirmación del pago;
+end group
+
+group "Fase de Cierre: Actualización Fragmentada y Desfasada"
+    |Pagos\n(Guillermo / Lucas)|
+    :**Para Reembolsos VARIABLES:**;
+    :Actualiza manualmente el estado\na "Pagado" en **Xpendit**;
+    note right #FDFD96
+      **Desfase Temporal:**
+      Puede pasar tiempo entre el pago real
+      y la actualización en Xpendit.
+    end note
+    |Xpendit / WhatsApp|
+    :Notifica al Paciente "Reembolso Pagado";
+    
+    |Pagos\n(Guillermo / Lucas)|
+    :**Para Viáticos FIJOS:**;
+    :Informa por **email a Logística**\nque el pago fue realizado;
+    note right #FDFD96
+      No hay notificación automática
+      al paciente para los viáticos fijos.
+      El ciclo se cierra por un canal distinto,
+      manteniendo el silo de información.
+    end note
+end group
+@enduml
