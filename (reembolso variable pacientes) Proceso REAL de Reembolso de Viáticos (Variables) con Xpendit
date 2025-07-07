@@ -1,0 +1,147 @@
+@startuml
+!theme plain
+title "Proceso REAL de Reembolso de Viáticos (Variables) con Xpendit"
+skinparam titleFontSize 20
+skinparam swimlane {
+    ArrowColor #333333
+}
+skinparam activity {
+    ArrowColor #333333
+    BorderColor #333333
+    BackgroundColor #White
+}
+skinparam note {
+    BorderColor #666666
+    BackgroundColor #FFFFE0
+}
+
+footer
+**Observación Clave:** Los viáticos FIJOS no pasan por Xpendit. Siguen un proceso separado y paralelo gestionado por Logística, aumentando la complejidad y los silos.
+end footer
+
+actor Paciente
+participant Xpendit
+participant "WhatsApp Bot" as WhatsApp
+
+box "Clínica: Flujo de Aprobación" #AliceBlue
+    participant "Aprobador \n(Coordinación o Finanzas)" as Aprobador
+    database "Ficha de Papel / Excel" as Papel
+end box
+
+box "Clínica: Flujo de Pago" #LightGoldenRodYellow
+    participant "Guillermo (Contabilidad)" as Guillermo
+    database "SAP (ERP)" as ERP
+    database "Excel con Macro\n(Conexión Banco)" as Macro
+    participant "Lucas (Gerencia)" as Lucas
+end box
+
+group "Fase 1: Captura Digital (El 'Front-End' Moderno)"
+    Paciente -> Xpendit: 1. Sube foto de la boleta
+    activate Xpendit
+    Xpendit -> Xpendit: 2. IA extrae datos (con ~5% de error)
+    Xpendit -> WhatsApp: 3. Notifica a Paciente "Recibido"
+    deactivate Xpendit
+
+    note right of Xpendit #FDFD96
+        **Clasificación inicial:**
+        El paciente indica vía WhatsApp si es
+        Gasto de Medicamento -> Ruta a Finanzas
+        Gasto de Traslado/Alojamiento -> Ruta a Coordinación
+    end note
+    Xpendit -> Aprobador: 4. Notifica nuevo gasto "Pendiente de Revisión"
+end
+
+group "Fase 2: Validación 'Híbrida' (El 'Back-End' Manual)"
+    Aprobador -> Xpendit: 5. Abre el gasto en Xpendit
+    Aprobador -> Xpendit: 6. **Corrige datos** extraídos por la IA (monto, fecha, etc.)
+
+    opt "Si la información es insuficiente o dudosa"
+        Aprobador -> Papel: **7. BÚSQUEDA MANUAL EXTERNA**
+        activate Aprobador
+        note left of Aprobador #FFCCCC
+            **PUNTO DE FRICCIÓN CRÍTICO**
+            **El 'Matching' Manual Persiste:**
+            - El Aprobador **SALE de Xpendit**.
+            - Busca la Ficha de Papel del paciente.
+            - **Problema:** La ficha puede estar en uso, perdida o no disponible.
+            - Corrobora fecha de visita/EA y que el gasto sea lógico.
+        end note
+        Papel --> Aprobador: (eventualmente) Encuentra la información
+        deactivate Aprobador
+    end
+
+    alt "Gasto Aprobado"
+        Aprobador -> Xpendit: 8a. Aprueba el gasto
+        Xpendit -> Guillermo: 9a. Notifica: "Gasto Aprobado para Pago"
+        Xpendit -> WhatsApp: Notifica a Paciente "Aprobado"
+    else "Gasto Rechazado"
+        Aprobador -> Xpendit: 8b. Rechaza con motivo (ej. ilegible, no coincide con visita)
+        Xpendit -> WhatsApp: Notifica a Paciente "Rechazado"
+    end
+end
+
+group "Fase 3: El Ritual de Pago (Proceso 'Artesanal' de Contabilidad)"
+    Guillermo -> Xpendit: 9. Consulta y **exporta lista** de gastos aprobados
+
+    opt "Si el paciente es nuevo (no existe en SAP ni en la Macro del banco)"
+        activate Guillermo
+        Guillermo -> Aprobador: 10. Solicita datos completos del paciente (RUT, cuenta, etc.)
+        Aprobador --> Guillermo: Envía información
+        
+        note right of Guillermo #FFCCCC
+            **¡ALERTA DE INEFICIENCIA: 4 BASES DE DATOS!**
+            El paciente ahora existe en:
+            1. **Xpendit:** (Incompleto, solo para el gasto)
+            2. **Coordinación:** (Fuente original de datos)
+            3. **SAP (ERP):** Se debe crear manualmente.
+            4. **Excel del Banco:** Se debe crear manualmente.
+            Esto es un riesgo operativo y fuente de errores.
+        end note
+
+        Guillermo -> ERP: **11. Registra NUEVO PACIENTE en SAP**
+        Guillermo -> Macro: **12. Registra NUEVO PACIENTE en Excel**
+        deactivate Guillermo
+    end
+
+    Guillermo -> Guillermo: 13. **Imprime** el exportado de Xpendit
+    
+    Guillermo -> ERP: 14. **DIGITACIÓN MANUAL EN SAP** (del gasto)
+    activate Guillermo
+    note right of Guillermo #FFCCCC
+        **RE-TRABAJO Y RIESGO:**
+        - Se re-digita en SAP el **gasto**, que ya
+        estaba aprobado y validado en Xpendit.
+        - Proceso 1-a-1, lento y propenso a errores.
+    end note
+    deactivate Guillermo
+
+    Guillermo -> Macro: 15. Usa formulario para crear nómina de pago
+    Macro -> Macro: 16. Genera archivo de pago (TXT) para el banco
+    
+    Guillermo -> Lucas: 17. Informa por email: "Nómina lista para aprobación"
+    Lucas -> Lucas: 18. Aprueba la ejecución del pago
+    note right
+        El banco procesa el archivo TXT
+    end note
+end
+
+group "Fase 4: Cierre del Ciclo (Actualización Asíncrona)"
+    Guillermo -> Guillermo: 19. Espera la confirmación del pago por parte del banco
+    note right #FDFD96
+        **Desfase Temporal:**
+        Puede pasar tiempo entre el pago real
+        y la actualización en Xpendit.
+    end note
+    
+    Guillermo -> Xpendit: 20. **ACTUALIZACIÓN MANUAL FINAL**
+    activate Guillermo
+    Guillermo -> Xpendit: Cambia estado a "Pagado"
+    deactivate Guillermo
+    
+    Xpendit -> WhatsApp: 21. Notifica a Paciente "Tu reembolso ha sido pagado"
+
+    alt "Si un pago falla (es rebotado)"
+        Guillermo -> Aprobador: Envía email para contactar al paciente y corregir datos bancarios
+    end
+end
+@enduml
