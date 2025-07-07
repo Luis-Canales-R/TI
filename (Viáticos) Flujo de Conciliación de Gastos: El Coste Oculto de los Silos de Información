@@ -1,0 +1,122 @@
+@startuml
+!theme plain
+
+title "Flujo de Conciliación de Gastos: El Coste Oculto de los Silos de Información"
+skinparam titleFontSize 22
+skinparam swimlane {
+    ArrowColor #333333
+}
+skinparam activity {
+    ArrowColor #333333
+    BorderColor #333333
+    BackgroundColor #White
+}
+skinparam note {
+    BorderColor #666666
+    BackgroundColor #FFFFE0
+}
+
+|Sponsor|
+start
+:Notifica Cierre del Estudio;
+
+|Finanzas / Facturación|
+:Recibe notificación de cierre;
+:Activa el proceso de conciliación;
+
+partition "Fase 1: Origen del Silo (Registro Aislado)" {
+    |#BDE0FE| Logística / Coordinador|
+    ' --- ESTA ES LA LÍNEA CORREGIDA ---
+    note left #E0F7FA
+        **Causa Raíz del Silo:**
+        - No hay política formal de la gerencia.
+        - **No tienen acceso al eCRF.**
+        - El eCRF no tiene campos para gastos (transporte, etc.).
+        - El Excel es la única herramienta disponible.
+    end note
+    :Durante meses, registra gastos de paciente en un Excel propio;
+    :Recibe solicitud de Finanzas;
+    :Consolida su nómina y reúne comprobantes finales;
+    --> |Finanzas / Facturación| :**Envía Nómina (Excel) y comprobantes**;
+}
+
+partition "Fase 2: La Arqueología de Datos (Re-Trabajo y Riesgo)" {
+    |#FEF3B5| Finanzas / Facturación|
+    note right #FFCCCC
+        **PUNTO DE FRACTURA #1**
+        **Transferencia de Datos No Fiables**
+        Se recibe un documento estático (Excel) sin
+        validación, sin formato y con alto riesgo de error
+        en IDs de paciente, fechas y montos.
+    end note
+    :Recibe el Excel y comienza la **"cacería de datos"**;
+
+    repeat
+        :Toma una línea del Excel de Logística;
+        note left
+            **Fuentes de Datos a Consultar:**
+            1. Excel de Logística
+            2. Sistema eCRF
+            3. **Ficha Clínica Física (Papel)**
+        end note
+        if (¿Coinciden fecha, paciente, estudio y monto?) then (Sí)
+            :Marca el gasto como "Validado";
+        else (No)
+            #FFCCCC: **INICIA CICLO DE RESOLUCIÓN DE CONFLICTO**;
+            note right #FFCCCC
+                **Pesadilla de la Discrepancia:**
+                - Re-verificar la Ficha Clínica en papel.
+                - Buscar de nuevo en el eCRF.
+                - **Enviar email a Logística/Coordinador.**
+                - Esperar respuesta.
+                - Corregir el dato manualmente.
+            end note
+            :Corrige el error tras la investigación;
+        endif
+    repeat while (quedan líneas en el Excel)
+}
+
+partition "Fase 3: La Reconstrucción del Valor (Ineficiencia Estructural)" {
+    |#D5A6BD| Finanzas / Facturación|
+    note left #FDFD96
+        **PUNTO DE FRACTURA #2**
+        **TRABAJO DUPLICADO Y RECONSTRUCCIÓN**
+        Finanzas no solo valida, reconstruye la verdad financiera
+        que el proceso original no pudo capturar.
+    end note
+    :**CREA la Nómina FINAL para el Sponsor**;
+    :1. **Elimina** gastos de viáticos fijos
+    (que se pagan por visita);
+    :2. **AÑADE** visitas no facturadas
+    (detectadas en el eCRF, desconocidas para Logística);
+    note right #E06666
+        **== PÉRDIDA DE INGRESOS EVITADA MANUALMENTE ==**
+        Este paso demuestra que el proceso actual
+        provoca que se dejen de facturar visitas.
+        Finanzas está "rescatando" dinero que la
+        operación normal olvida.
+    end note
+    :3. Agrupa, convierte a USD, anonimiza y escanea respaldos;
+    :Consolida el informe final;
+    --> |Sponsor| :Envía paquete de facturación final;
+
+}
+
+|Sponsor|
+:Recibe la Nómina/Factura;
+note right
+    Cualquier error que se filtre hasta aquí
+    genera un alto coste de reputación
+    y re-trabajo.
+end note
+:Procesa el pago;
+
+|Finanzas / Facturación|
+note left
+    El tiempo total de la "Arqueología"
+    y "Reconstrucción" **retrasa el flujo
+    de caja** de la clínica.
+end note
+:Recibe pago y concilia;
+stop
+@enduml
