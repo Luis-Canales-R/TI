@@ -1,0 +1,124 @@
+@startuml
+!theme plain
+title "Diagrama "As-Is": Conciliación Financiera de Cierre de Estudio"
+skinparam titleFontSize 20
+skinparam sequence {
+    ArrowColor #333333
+    ActorBorderColor #228B22
+    ParticipantBorderColor #0077B6
+    DatabaseBorderColor #C74636
+}
+skinparam note {
+    BackgroundColor #FFF8E1
+    BorderColor #A04000
+    FontName "Segoe UI"
+    FontSize 11
+}
+
+' --- Actores y Sistemas ---
+actor "Gerente Inv. Clínica" as Gerente
+participant "Equipo de Finanzas" as Finanzas
+participant "Sponsor" as Sponsor
+database "eCRF (Sponsor)" as eCRF
+database "ERP (Interno)" as ERP
+database "Correos (Outlook)" as Outlook
+database "Excel (Macro)" as ExcelMacro
+
+box "Entorno de la Clínica" #LightBlue
+    participant Finanzas
+    participant Gerente
+    database ERP
+    database Outlook
+    database ExcelMacro
+end box
+
+box "Entorno del Sponsor" #LightGreen
+    participant Sponsor
+    database eCRF
+end box
+
+
+group 1. Inicio del Proceso (Disparadores Manuales)
+    Gerente -> Finanzas: **1. Alerta informal de "Visita de Cierre"**
+    note right of Gerente: Disparador proactivo pero informal.
+    
+    Sponsor -> Finanzas: **2. Correo de confirmación "Cierre de Base de Datos"**
+    note right of Sponsor: Disparador oficial y crítico.
+end group
+
+group 2. Fase de Recolección de Datos (Alta Carga Manual)
+    Finanzas -> eCRF: **3. Extrae datos de visitas (uno por uno)**
+    note right of Finanzas #FFC0CB
+        **PUNTO DE DOLOR:**
+        - 100% Manual.
+        - **1 a 2 semanas** para un estudio mediano.
+        - Alto riesgo de omisión (pérdida de ingresos).
+    end note
+    eCRF --> Finanzas: Datos de actividad clínica
+    
+    Finanzas -> Outlook: **4. Busca proformas y confirmaciones de pago**
+    note right of Finanzas #FFC0CB
+        **PUNTO DE DOLOR:**
+        - No hay fuente única de verdad.
+        - "Arqueología" en correos.
+        - Riesgo de no encontrar pagos (pérdida de trazabilidad).
+    end note
+    Outlook --> Finanzas: Archivos de proformas y emails
+
+    Finanzas -> ERP: **5. Consulta facturas emitidas (sin detalle)**
+    note right of Finanzas: El ERP no tiene la conciliación, solo el registro de la factura.
+    ERP --> Finanzas: Listado de facturas
+end group
+
+group 3. Conciliación Asistida por Herramienta Interna
+    Finanzas -> ExcelMacro: **6. Prepara y carga datos en plantilla Excel**
+    note right of Finanzas #FFC0CB
+        **PUNTO DE DOLOR:**
+        - Requiere "adivinar" y desagrupar pagos del sponsor.
+        - Se basa en la experiencia, no en reglas fijas.
+        - Datos de entrada de mala calidad afectan todo el proceso.
+    end note
+
+    activate Finanzas
+    Finanzas -> Finanzas: **7. Ejecuta Macro y realiza revisión manual**
+    note right of Finanzas
+        **La Macro ayuda, pero no elimina el trabajo:**
+        1. **Audita:** Compara pagos vs. precios.
+        2. **Valida:** Compara fechas vs. CRF.
+        3. **Aprueba:** **El usuario debe marcar "OK" manualmente.**
+        4. **Reporta:** Genera lista de pendientes.
+    end note
+    deactivate Finanzas
+    
+    ExcelMacro --> Finanzas: **Reporte de Pendientes y Discrepancias**
+end group
+
+group 4. Ciclo de Disputa y Acuerdo (Cuello de Botella Externo)
+    Finanzas -> Sponsor: **8. Envía Estado de Cuenta Final para revisión**
+    
+    ... **Demora Crítica: 1 a 3 meses** ...
+
+    Sponsor --> Finanzas: **9. Responde (usualmente con observaciones)**
+    note left of Sponsor #FFC0CB
+        **PUNTO DE DOLOR:**
+        - Ciclo de "ping-pong" que dura meses.
+        - Cada ronda toma 2-4 semanas adicionales.
+        - Fricción y retraso en el flujo de caja.
+    end note
+    
+    Finanzas <-> Sponsor: **10. Múltiples rondas de aclaración y acuerdo**
+end group
+
+group 5. Cierre Financiero
+    Finanzas -> ERP: **11. Genera Factura Final**
+    note right of Finanzas: Incluye ítems acordados + Tarifa de Cierre.
+    
+    Finanzas -> Sponsor: **12. Envía Factura Final para pago**
+    
+    Sponsor --> Finanzas: **13. Realiza Pago Final**
+    
+    Finanzas -> ERP: **14. Registra ingreso y cierra estudio financieramente**
+    note right of Finanzas: **Proceso total: 3 a 7+ meses.** Impacto severo en capital de trabajo.
+end group
+
+@enduml
