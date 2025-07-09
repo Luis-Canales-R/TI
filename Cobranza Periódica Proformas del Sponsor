@@ -1,0 +1,112 @@
+@startuml
+!theme plain
+title "Diagrama "As-Is": Cobranza Periódica (Generador de Deuda de Conciliación)"
+skinparam titleFontSize 20
+skinparam sequence {
+    ArrowColor #333333
+    ActorBorderColor #228B22
+    ParticipantBorderColor #0077B6
+    DatabaseBorderColor #C74636
+}
+skinparam note {
+    BackgroundColor #FFF8E1
+    BorderColor #A04000
+    FontName "Segoe UI"
+    FontSize 11
+}
+
+' --- Actores y Sistemas ---
+participant "Gestión de Datos" as Data
+participant "Finanzas (Karina)" as FinKarina
+participant "Finanzas (Josmari)" as FinJosmari
+participant "Sponsor" as Sponsor
+database "eCRF (Sponsor)" as eCRF
+database "ERP (Interno)" as ERP
+database "PC/Red Local" as LocalFolder
+
+box "Clínica" #LightBlue
+    participant Data
+    participant FinKarina
+    participant FinJosmari
+    database ERP
+    database LocalFolder
+end box
+
+box "Sponsor" #LightGreen
+    participant Sponsor
+    database eCRF
+end box
+
+group 1. Registro de Actividad con Retraso (Lag Time)
+    note over Data, eCRF
+        La actividad clínica ocurre en el Día 0.
+    end note
+    
+    ... **Retraso Promedio: 9 días** ...
+
+    Data -> eCRF: **1. Transcribe datos de la visita**
+    note right of Data #FFC0CB
+        **PUNTO DE DOLOR:**
+        Este retraso de 9 días significa que el eCRF
+        **no refleja la actividad en tiempo real**.
+    end note
+end
+
+group 2. Proceso de Cobro Reactivo y Ciego
+    Sponsor -> eCRF: **2. Revisa datos en su sistema**
+    note right of Sponsor: El Sponsor solo ve lo que se ha transcrito hasta ese momento.
+    
+    Sponsor -> FinKarina: **3. Envía Proforma (frecuencia irregular)**
+    note right of Sponsor #FFC0CB
+        **PUNTO DE DOLOR:**
+        La proforma **omite** cualquier actividad
+        realizada en los últimos 9+ días.
+        **Aquí nace la "Deuda de Conciliación".**
+    end note
+    
+    activate FinKarina
+    FinKarina -> FinKarina: **4. Aceptación Ciega**
+    note right of FinKarina #FFC0CB
+        **PUNTO DE DOLOR CRÍTICO:**
+        - No se realiza conciliación interna.
+        - Se confía 100% en el sponsor por falta de
+          capacidad operativa para verificar.
+        - Cualquier sensación de "falta algo" se ignora.
+    end note
+    deactivate FinKarina
+end
+
+group 3. Facturación y Archivo Manual
+    FinKarina -> ERP: **5. Genera Factura basada en Proforma**
+    
+    FinKarina -> Sponsor: **6. Envía Factura por correo**
+    FinKarina -> FinJosmari: (en copia)
+    
+    activate FinJosmari
+    FinJosmari -> LocalFolder: **7. Descarga y archiva Factura y Proforma**
+    note right of FinJosmari
+        **Mejora Manual (Parche):**
+        - Centraliza documentos en una carpeta.
+        - Reduce la "arqueología de correos".
+        - Proceso frágil, dependiente de una persona.
+    end note
+    deactivate FinJosmari
+end
+
+group 4. Pago y Consecuencias
+    Sponsor --> FinKarina: **8. Realiza Pago**
+    note left of Sponsor
+        A veces incluye retenciones (ej. 10%)
+        que se deben conciliar en el futuro.
+        Otra capa de deuda a rastrear.
+    end note
+    
+    FinKarina -> ERP: **9. Registra ingreso y cierra transacción periódica**
+    
+    note over FinKarina, Sponsor #FFC0CB
+        **Resultado del Proceso:**
+        Se ha cobrado rápido, pero se ha generado una deuda de conciliación
+        invisible que **solo se abordará en el doloroso proceso de cierre final.**
+    end note
+end
+@enduml
