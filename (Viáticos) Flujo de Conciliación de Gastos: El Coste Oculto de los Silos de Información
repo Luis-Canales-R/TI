@@ -1,7 +1,7 @@
 @startuml
 !theme plain
 
-title "Flujo de Conciliación de Gastos: El Coste Oculto de los Silos de Información"
+title "Flujo de Conciliación de Gastos: Crónica de un Proceso Roto"
 skinparam titleFontSize 22
 skinparam swimlane {
     ArrowColor #333333
@@ -18,104 +18,150 @@ skinparam note {
 
 |Sponsor|
 start
-:Notifica Cierre del Estudio;
+:Notifica Cierre del Estudio por Email;
+note right
+    **Alerta Temprana (No oficial):**
+    Antes de este paso, Valeria Lloveras
+    (Coordinadora) alerta internamente
+    sobre la visita de cierre del monitor.
+
+    Este aviso previo permite al equipo
+    **adelantar la preparación de la conciliación**
+    antes de recibir la notificación formal del Sponsor.
+end note
 
 |Finanzas / Facturación|
 :Recibe notificación de cierre;
-:Activa el proceso de conciliación;
+--> |Logística / Coordinador| :Notifica Cierre por Email;
 
-partition "Fase 1: Origen del Silo (Registro Aislado)" {
+partition "Fase 1: El Origen del Caos (Silo Físico y Digital)" {
     |#BDE0FE| Logística / Coordinador|
-    ' --- ESTA ES LA LÍNEA CORREGIDA ---
     note left #E0F7FA
         **Causa Raíz del Silo:**
-        - No hay política formal de la gerencia.
-        - **No tienen acceso al eCRF.**
-        - El eCRF no tiene campos para gastos (transporte, etc.).
-        - El Excel es la única herramienta disponible.
+        - El CTMS contratado **nunca se implementó**, forzando
+          un sistema manual desde siempre.
+        - Se desaprovecha la inversión y se institucionaliza
+          un método propenso a errores.
     end note
-    :Durante meses, registra gastos de paciente en un Excel propio;
+    :Mantiene **archivo físico** de "Vales" (Carátula + Boletas);
+    :Registra visitas y N° de Vale en **Nómina Excel**;
     :Recibe solicitud de Finanzas;
-    :Consolida su nómina y reúne comprobantes finales;
-    --> |Finanzas / Facturación| :**Envía Nómina (Excel) y comprobantes**;
+    --> |Finanzas / Facturación| :**Envía Nómina Excel (solo la lista de vales)**;
 }
 
-partition "Fase 2: La Arqueología de Datos (Re-Trabajo y Riesgo)" {
+partition "Fase 2: La Peregrinación y Arqueología de Datos" {
     |#FEF3B5| Finanzas / Facturación|
     note right #FFCCCC
         **PUNTO DE FRACTURA #1**
-        **Transferencia de Datos No Fiables**
-        Se recibe un documento estático (Excel) sin
-        validación, sin formato y con alto riesgo de error
-        en IDs de paciente, fechas y montos.
+        **BARRERA FÍSICA Y DIGITAL**
+        Finanzas debe ir a la oficina de Logística
+        para cazar la información.
     end note
-    :Recibe el Excel y comienza la **"cacería de datos"**;
+    :Recibe el Excel;
+    :**PEREGRINACIÓN A LOGÍSTICA**;
+    :Busca manualmente "Vales" físicos en archivo
+    cronológico (todos los estudios mezclados);
+    :Escanea los vales y boletas encontrados;
+    :Crea respaldo digital (original y **anonimizado**);
 
     repeat
-        :Toma una línea del Excel de Logística;
+        :Toma un gasto/vale para validar;
         note left
             **Fuentes de Datos a Consultar:**
-            1. Excel de Logística
-            2. Sistema eCRF
-            3. **Ficha Clínica Física (Papel)**
+            1. Nómina Excel de Logística
+            2. **Vale Físico y Boletas**
+            3. Sistema eCRF
+            4. **BBDD de Screening** (si hay error de paciente)
         end note
-        if (¿Coinciden fecha, paciente, estudio y monto?) then (Sí)
+        if (¿Coinciden datos, montos, paciente?) then (Sí)
             :Marca el gasto como "Validado";
         else (No)
             #FFCCCC: **INICIA CICLO DE RESOLUCIÓN DE CONFLICTO**;
             note right #FFCCCC
                 **Pesadilla de la Discrepancia:**
-                - Re-verificar la Ficha Clínica en papel.
-                - Buscar de nuevo en el eCRF.
-                - **Enviar email a Logística/Coordinador.**
-                - Esperar respuesta.
-                - Corregir el dato manualmente.
+                - Monto del Vale != Boleta
+                - Datos de paciente incorrectos.
+                - Boletas/impresiones ilegibles.
+                - **Buscar en BBDD de Screening.**
+                - Enviar email a Logística.
+                - Esperar y corregir manualmente.
             end note
             :Corrige el error tras la investigación;
         endif
-    repeat while (quedan líneas en el Excel)
+    repeat while (quedan gastos por validar)
 }
 
-partition "Fase 3: La Reconstrucción del Valor (Ineficiencia Estructural)" {
+partition "Fase 3: La Reconstrucción y el Desperdicio" {
     |#D5A6BD| Finanzas / Facturación|
+    :**CREA la Nómina FINAL (Informe Excel)**;
     note left #FDFD96
         **PUNTO DE FRACTURA #2**
-        **TRABAJO DUPLICADO Y RECONSTRUCCIÓN**
-        Finanzas no solo valida, reconstruye la verdad financiera
-        que el proceso original no pudo capturar.
+        **TRABAJO DUPLICADO Y DESPERDICIO**
+        Se reconstruye la información y luego
+        se descarta parte del trabajo realizado.
     end note
-    :**CREA la Nómina FINAL para el Sponsor**;
-    :1. **Elimina** gastos de viáticos fijos
-    (que se pagan por visita);
-    :2. **AÑADE** visitas no facturadas
-    (detectadas en el eCRF, desconocidas para Logística);
+    :1. **FILTRA GASTOS (REGLA <$10)**;
     note right #E06666
-        **== PÉRDIDA DE INGRESOS EVITADA MANUALMENTE ==**
-        Este paso demuestra que el proceso actual
-        provoca que se dejen de facturar visitas.
-        Finanzas está "rescatando" dinero que la
-        operación normal olvida.
+        **== DESPERDICIO INSTANTÁNEO ==**
+        Se resta el viático fijo del gasto total.
+        Si la diferencia es <$10 o negativa,
+        **SE ELIMINA LA LÍNEA COMPLETA.**
+        Todo el esfuerzo de búsqueda, escaneo y
+        validación para ese gasto **se pierde**.
     end note
-    :3. Agrupa, convierte a USD, anonimiza y escanea respaldos;
-    :Consolida el informe final;
-    --> |Sponsor| :Envía paquete de facturación final;
+    :2. **AÑADE** visitas no facturadas
+    (detectadas en conciliación de visitas);
+    :3. Consolida, convierte a moneda (USD/EUR/CLP) y prepara informe;
+    note left
+        **Duración del Esfuerzo Interno:**
+        Todo el proceso de Arqueología y
+        Reconstrucción consume entre
+        **1 semana y 1 mes** al equipo de Finanzas.
+    end note
+    --> |Sponsor| :**Envía Email con:**\n- Informe Final (Excel)\n- Respaldos Escaneados y Anonimizados;
+}
 
+partition "Fase 4: El 'Pin-Pon' Interminable del Rework" {
+    |Sponsor|
+    :Recibe y revisa el paquete;
+
+    while (¿Encuentra observaciones?) is (Sí)
+        --> |Finanzas / Facturación| :**Envía Email con Observaciones**;
+        note right #FFCCCC
+            **DEMORA CRÍTICA: 1 a 3 MESES**
+            El Sponsor tarda este tiempo en enviar
+            CADA una de sus respuestas.
+        end note
+
+        |Finanzas / Facturación|
+        #FFCCCC: **INICIA CICLO DE SUBSANACIÓN**;
+        :Investiga y subsana buscando
+        en la **Ficha Clínica del Paciente**;
+         note left
+            **Respuesta del Equipo (1 semana)**
+            El equipo interno resuelve las dudas
+            rápidamente, pero debe esperar meses
+            por la siguiente respuesta del Sponsor.
+        end note
+        --> |Sponsor| :Re-envía informe ajustado;
+
+    endwhile (No)
+    note right
+        **Ciclo de "Pin-Pon"**
+        Este bucle de revisión se repite
+        **de 1 a 3 veces**, añadiendo
+        meses de retraso al pago.
+    end note
 }
 
 |Sponsor|
-:Recibe la Nómina/Factura;
-note right
-    Cualquier error que se filtre hasta aquí
-    genera un alto coste de reputación
-    y re-trabajo.
-end note
-:Procesa el pago;
+:Recibe informe final y procesa pago;
 
 |Finanzas / Facturación|
 note left
-    El tiempo total de la "Arqueología"
-    y "Reconstrucción" **retrasa el flujo
-    de caja** de la clínica.
+    El tiempo total de Arqueología,
+    Reconstrucción y el "Pin-Pon" **retrasan
+    críticamente el flujo de caja**.
 end note
 :Recibe pago y concilia;
 stop
