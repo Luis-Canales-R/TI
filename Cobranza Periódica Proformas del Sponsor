@@ -23,7 +23,6 @@ participant "Sponsor" as Sponsor
 database "eCRF (Sponsor)" as eCRF
 database "ERP (Interno)" as ERP
 database "PC/Red Local" as LocalFolder
-participant "Calendario" as Calendar
 participant "Bandeja de Entrada" as Inbox
 
 box "Clínica" #LightBlue
@@ -32,7 +31,6 @@ box "Clínica" #LightBlue
     participant FinJosmari
     database ERP
     database LocalFolder
-    participant Calendar
     participant Inbox
 end box
 
@@ -49,39 +47,38 @@ group 1. Registro de Actividad con Retraso (Lag Time)
     ... **Retraso Promedio: 9 días** ...
 
     Data -> eCRF: **1. Transcribe datos de la visita**
-    note right of Data #FFC0CB
-        **PUNTO DE DOLOR:**
+    note right of Data
         Este retraso de 9 días significa que el eCRF
-        **no refleja la actividad en tiempo real**.
+        no refleja la actividad en tiempo real.
     end note
 end
 
 group 2. Proceso de Cobro Reactivo y Seguimiento Manual
-    Sponsor -> eCRF: **2. Revisa datos en su sistema**
-    note right of Sponsor
-        El Sponsor solo ve lo que se ha transcrito hasta ese momento en eCRF.
-        Además, cierra la proforma dos semanas antes de enviarla.
+    Sponsor -> eCRF: **2. Revisa datos y prepara proforma**
+    note right of Sponsor #FFC0CB
+        **PUNTO DE DOLOR (Origen de Errores y Deuda):**
+        El proceso manual del Sponsor y su cierre anticipado (2 sem.)
+        generan dos problemas críticos que corrompen la proforma:
+        
+        1. **Errores Manuales:** Pagos/descuentos duplicados,
+        conceptos incorrectos, pagos indebidos y montos erróneos.
+        
+        2. **Omisión de Actividad Reciente:** Se excluyen servicios
+        válidos, creando sistemáticamente la **"Deuda de Conciliación"**.
     end note
 
     alt El Sponsor envía proforma a tiempo
         Sponsor -> Inbox: **3a. Envía Proforma por correo**
         FinKarina -> Inbox: **3b. Revisa bandeja de entrada**
     else El Sponsor se retrasa u olvida
-        note over FinKarina, Calendar
+        note over FinKarina
             Tras no encontrar el correo, Karina
-            revisa su calendario y detecta el retraso.
+            detecta que la proforma está retrasada.
         end note
         FinKarina -> Sponsor: **3c. Envía correo recordatorio**
         Sponsor -> Inbox: **3d. Envía Proforma (tardíamente)**
     end
-
-    note right of Sponsor #FFC0CB
-        **PUNTO DE DOLOR:**
-        Independientemente de si llega a tiempo o tarde,
-        la proforma **omite** la actividad reciente.
-        **Aquí nace la "Deuda de Conciliación".**
-    end note
-
+    
     activate FinKarina
     FinKarina -> FinKarina: **4. Aceptación Ciega**
     note right of FinKarina #FFC0CB
