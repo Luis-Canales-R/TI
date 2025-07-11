@@ -23,6 +23,8 @@ participant "Sponsor" as Sponsor
 database "eCRF (Sponsor)" as eCRF
 database "ERP (Interno)" as ERP
 database "PC/Red Local" as LocalFolder
+participant "Calendario" as Calendar
+participant "Bandeja de Entrada" as Inbox
 
 box "Clínica" #LightBlue
     participant Data
@@ -30,6 +32,8 @@ box "Clínica" #LightBlue
     participant FinJosmari
     database ERP
     database LocalFolder
+    participant Calendar
+    participant Inbox
 end box
 
 box "Sponsor" #LightGreen
@@ -41,7 +45,7 @@ group 1. Registro de Actividad con Retraso (Lag Time)
     note over Data, eCRF
         La actividad clínica ocurre en el Día 0.
     end note
-    
+
     ... **Retraso Promedio: 9 días** ...
 
     Data -> eCRF: **1. Transcribe datos de la visita**
@@ -52,61 +56,82 @@ group 1. Registro de Actividad con Retraso (Lag Time)
     end note
 end
 
-group 2. Proceso de Cobro Reactivo y Ciego
+group 2. Proceso de Cobro Reactivo y Seguimiento Manual
     Sponsor -> eCRF: **2. Revisa datos en su sistema**
     note right of Sponsor: El Sponsor solo ve lo que se ha transcrito hasta ese momento.
-    
-    Sponsor -> FinKarina: **3. Envía Proforma (frecuencia irregular)**
+
+    alt El Sponsor envía la proforma a tiempo
+        Sponsor -> Inbox: **3a. Envía Proforma**
+    else El Sponsor se retrasa u olvida
+        note over FinKarina, Calendar
+            Karina revisa su calendario y detecta
+            que falta una proforma.
+        end note
+        FinKarina -> Sponsor: **3b. Envía correo recordatorio**
+        Sponsor -> Inbox: **3c. Envía Proforma (tardíamente)**
+    end
+
+    FinKarina -> Inbox: **4. Revisa bandeja de entrada**
     note right of Sponsor #FFC0CB
         **PUNTO DE DOLOR:**
-        La proforma **omite** cualquier actividad
-        realizada en los últimos 9+ días.
+        Independientemente de si llega a tiempo o tarde,
+        la proforma **omite** la actividad reciente.
         **Aquí nace la "Deuda de Conciliación".**
     end note
-    
+
     activate FinKarina
-    FinKarina -> FinKarina: **4. Aceptación Ciega**
+    FinKarina -> FinKarina: **5. Aceptación Ciega**
     note right of FinKarina #FFC0CB
         **PUNTO DE DOLOR CRÍTICO:**
         - No se realiza conciliación interna.
         - Se confía 100% en el sponsor por falta de
           capacidad operativa para verificar.
-        - Cualquier sensación de "falta algo" se ignora.
     end note
     deactivate FinKarina
 end
 
 group 3. Facturación y Archivo Manual
-    FinKarina -> ERP: **5. Genera Factura basada en Proforma**
-    
-    FinKarina -> Sponsor: **6. Envía Factura por correo**
+    FinKarina -> ERP: **6. Genera Factura basada en Proforma**
+
+    FinKarina -> Sponsor: **7. Envía Factura por correo**
     FinKarina -> FinJosmari: (en copia)
-    
+
     activate FinJosmari
-    FinJosmari -> LocalFolder: **7. Descarga y archiva Factura y Proforma**
+    FinJosmari -> LocalFolder: **8. Descarga y archiva Factura y Proforma**
     note right of FinJosmari
         **Mejora Manual (Parche):**
         - Centraliza documentos en una carpeta.
-        - Reduce la "arqueología de correos".
         - Proceso frágil, dependiente de una persona.
     end note
     deactivate FinJosmari
 end
 
-group 4. Pago y Consecuencias
-    Sponsor --> FinKarina: **8. Realiza Pago**
+group 4. Pago y Consecuencias Manuales
+    Sponsor --> FinKarina: **9. Realiza Pago**
     note left of Sponsor
         A veces incluye retenciones (ej. 10%)
         que se deben conciliar en el futuro.
         Otra capa de deuda a rastrear.
     end note
-    
-    FinKarina -> ERP: **9. Registra ingreso y cierra transacción periódica**
-    
+
+    activate FinKarina
+    FinKarina -> FinKarina: **10. Verifica manualmente el ingreso**
+    note right of FinKarina #FFC0CB
+        **PUNTO DE DOLOR:**
+        La confirmación del pago es un proceso manual
+        y diario (revisión de cuentas bancarias).
+        **No hay notificación automática** que vincule
+        el pago con la factura en el sistema.
+    end note
+
+    FinKarina -> ERP: **11. Registra ingreso y cierra transacción**
+    deactivate FinKarina
+
     note over FinKarina, Sponsor #FFC0CB
         **Resultado del Proceso:**
-        Se ha cobrado rápido, pero se ha generado una deuda de conciliación
-        invisible que **solo se abordará en el doloroso proceso de cierre final.**
+        Se ha cobrado, pero a costa de un alto esfuerzo manual
+        y una deuda de conciliación invisible que **solo se
+        abordará en el doloroso proceso de cierre final.**
     end note
 end
 @enduml
