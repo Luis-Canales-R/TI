@@ -58,20 +58,23 @@ end
 
 group 2. Proceso de Cobro Reactivo y Seguimiento Manual
     Sponsor -> eCRF: **2. Revisa datos en su sistema**
-    note right of Sponsor: El Sponsor solo ve lo que se ha transcrito hasta ese momento.
+    note right of Sponsor
+        El Sponsor solo ve lo que se ha transcrito hasta ese momento en eCRF.
+        Además, cierra la proforma dos semanas antes de enviarla.
+    end note
 
-    alt El Sponsor envía la proforma a tiempo
-        Sponsor -> Inbox: **3a. Envía Proforma**
+    alt El Sponsor envía proforma a tiempo
+        Sponsor -> Inbox: **3a. Envía Proforma por correo**
+        FinKarina -> Inbox: **3b. Revisa bandeja de entrada**
     else El Sponsor se retrasa u olvida
         note over FinKarina, Calendar
-            Karina revisa su calendario y detecta
-            que falta una proforma.
+            Tras no encontrar el correo, Karina
+            revisa su calendario y detecta el retraso.
         end note
-        FinKarina -> Sponsor: **3b. Envía correo recordatorio**
-        Sponsor -> Inbox: **3c. Envía Proforma (tardíamente)**
+        FinKarina -> Sponsor: **3c. Envía correo recordatorio**
+        Sponsor -> Inbox: **3d. Envía Proforma (tardíamente)**
     end
 
-    FinKarina -> Inbox: **4. Revisa bandeja de entrada**
     note right of Sponsor #FFC0CB
         **PUNTO DE DOLOR:**
         Independientemente de si llega a tiempo o tarde,
@@ -80,7 +83,7 @@ group 2. Proceso de Cobro Reactivo y Seguimiento Manual
     end note
 
     activate FinKarina
-    FinKarina -> FinKarina: **5. Aceptación Ciega**
+    FinKarina -> FinKarina: **4. Aceptación Ciega**
     note right of FinKarina #FFC0CB
         **PUNTO DE DOLOR CRÍTICO:**
         - No se realiza conciliación interna.
@@ -91,13 +94,13 @@ group 2. Proceso de Cobro Reactivo y Seguimiento Manual
 end
 
 group 3. Facturación y Archivo Manual
-    FinKarina -> ERP: **6. Genera Factura basada en Proforma**
+    FinKarina -> ERP: **5. Genera Factura basada en Proforma**
 
-    FinKarina -> Sponsor: **7. Envía Factura por correo**
+    FinKarina -> Sponsor: **6. Envía Factura por correo**
     FinKarina -> FinJosmari: (en copia)
 
     activate FinJosmari
-    FinJosmari -> LocalFolder: **8. Descarga y archiva Factura y Proforma**
+    FinJosmari -> LocalFolder: **7. Descarga y archiva Factura y Proforma**
     note right of FinJosmari
         **Mejora Manual (Parche):**
         - Centraliza documentos en una carpeta.
@@ -107,7 +110,7 @@ group 3. Facturación y Archivo Manual
 end
 
 group 4. Pago y Consecuencias Manuales
-    Sponsor --> FinKarina: **9. Realiza Pago**
+    Sponsor --> FinKarina: **8. Realiza Pago**
     note left of Sponsor
         A veces incluye retenciones (ej. 10%)
         que se deben conciliar en el futuro.
@@ -115,7 +118,7 @@ group 4. Pago y Consecuencias Manuales
     end note
 
     activate FinKarina
-    FinKarina -> FinKarina: **10. Verifica manualmente el ingreso**
+    FinKarina -> FinKarina: **9. Verifica manualmente el ingreso**
     note right of FinKarina #FFC0CB
         **PUNTO DE DOLOR:**
         La confirmación del pago es un proceso manual
@@ -124,7 +127,7 @@ group 4. Pago y Consecuencias Manuales
         el pago con la factura en el sistema.
     end note
 
-    FinKarina -> ERP: **11. Registra ingreso y cierra transacción**
+    FinKarina -> ERP: **10. Registra ingreso y cierra transacción**
     deactivate FinKarina
 
     note over FinKarina, Sponsor #FFC0CB
