@@ -1,7 +1,7 @@
 @startuml
 !theme plain
 
-title "Diagrama "As-Is": Conciliación de Viaticos Reembolsables"
+title "Diagrama "As-Is": Conciliación de viáticos Reembolsables"
 skinparam titleFontSize 22
 skinparam swimlane {
     ArrowColor #333333
