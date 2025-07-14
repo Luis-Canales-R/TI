@@ -1,7 +1,7 @@
 @startuml
 !theme plain
 
-title "Flujo de Conciliación de Gastos: Crónica de un Proceso Roto (Versión Final)"
+title "Diagrama "As-Is": Conciliación de Viaticos Reembolsables"
 skinparam titleFontSize 22
 skinparam swimlane {
     ArrowColor #333333
@@ -99,7 +99,6 @@ partition "Fase 3: La Peregrinación y Arqueología de Datos" {
                 - Monto del Vale != Boleta
                 - Datos de paciente incorrectos.
                 - Boletas/impresiones ilegibles.
-                - **Buscar en BBDD de Screening.**
                 - Enviar email a Logística.
                 - Esperar y corregir manualmente.
             end note
