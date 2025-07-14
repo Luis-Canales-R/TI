@@ -1,7 +1,7 @@
 @startuml
 !theme plain
 
-title "Flujo de Conciliación de Gastos: Crónica de un Proceso Roto"
+title "Flujo de Conciliación de Gastos: Crónica de un Proceso Roto (Versión Final)"
 skinparam titleFontSize 22
 skinparam swimlane {
     ArrowColor #333333
@@ -46,22 +46,34 @@ partition "Fase 1: El Origen del Caos (Silo Físico y Digital)" {
     :Mantiene **archivo físico** de "Vales" (Carátula + Boletas);
     :Registra visitas y N° de Vale en **Nómina Excel**;
     :Recibe solicitud de Finanzas;
-    --> |Finanzas / Facturación| :**Envía Nómina Excel (solo la lista de vales)**;
+    --> |Finanzas / Facturación| :**Envía Email con:**\n- Nómina de Cierre (Excel)\n- Facturas de proveedores adjuntas;
 }
 
-partition "Fase 2: La Peregrinación y Arqueología de Datos" {
+partition "Fase 2: Validación Inicial y Preparación" {
+    |#FEF3B5| Finanzas / Facturación|
+    :Recibe email de Logística;
+    :Revisa el contrato del estudio para\ndeterminar el monto de **Viático Fijo**;
+    :En la nómina Excel, **elimina todas las filas**\nque corresponden a **Viático Fijo** puro;
+    note right
+        **Logística determina**, según la distancia del
+        paciente al centro, si recibe un viático
+        fijo o uno reembolsable.
+
+        El reembolsable se solicita al Sponsor
+        cuando el fijo no cubre los costos de
+        pacientes que viven muy lejos.
+    end note
+    :Revisa que el monto de cada factura\n(traslado/alojamiento) sea el mismo\nque el listado en la nómina;
+    :Determina los N° de vale a buscar físicamente;
+}
+
+partition "Fase 3: La Peregrinación y Arqueología de Datos" {
     |#FEF3B5| Finanzas / Facturación|
     note right #FFCCCC
         **PUNTO DE FRACTURA #1**
         **BARRERA FÍSICA Y DIGITAL**
         Finanzas debe ir a la oficina de Logística
         para cazar la información.
-    end note
-    :Recibe Excel de logística;
-    note right
-        A través de la nómina en Excel, se determinan
-        los números de vale que se deben buscar
-        en la oficina de logística.
     end note
     :**PEREGRINACIÓN A LOGÍSTICA**;
     :Busca manualmente "Vales" físicos en archivo
@@ -96,7 +108,7 @@ partition "Fase 2: La Peregrinación y Arqueología de Datos" {
     repeat while (quedan gastos por validar)
 }
 
-partition "Fase 3: La Reconstrucción y el Desperdicio" {
+partition "Fase 4: La Reconstrucción y el Desperdicio" {
     |#D5A6BD| Finanzas / Facturación|
     :**CREA la Nómina FINAL (Informe Excel)**;
     note left #FDFD96
@@ -105,28 +117,29 @@ partition "Fase 3: La Reconstrucción y el Desperdicio" {
         Se reconstruye la información y luego
         se descarta parte del trabajo realizado.
     end note
-    :1. **FILTRA GASTOS (REGLA <$10)**;
+    :1. **FILTRA GASTOS (REGLA DE NEGOCIO)**;
     note right #E06666
         **== DESPERDICIO INSTANTÁNEO ==**
-        Se resta el viático fijo del gasto total.
-        Si la diferencia es <$10 o negativa,
+        Para gastos reembolsables:
+        Se calcula: (Gasto Total Rendido - Viático Fijo de Contrato).
+        Si la diferencia es **menor a $10 o negativa**,
         **SE ELIMINA LA LÍNEA COMPLETA.**
-        Todo el esfuerzo de búsqueda, escaneo y
-        validación para ese gasto **se pierde**.
+        Todo el esfuerzo para ese gasto **se pierde**.
     end note
     :2. **AÑADE** visitas no facturadas
     (detectadas en conciliación de visitas);
     :3. Consolida, convierte a moneda (USD/EUR/CLP) y prepara informe;
+    :4. Anonimiza la nómina final y los respaldos;
     note left
         **Duración del Esfuerzo Interno:**
         Todo el proceso de Arqueología y
         Reconstrucción consume entre
         **1 semana y 1 mes** al equipo de Finanzas.
     end note
-    --> |Sponsor| :**Envía Email con:**\n- Informe Final (Excel)\n- Respaldos Escaneados y Anonimizados;
+    --> |Sponsor| :**Envía Email con:**\n- Informe Final (Excel)\n- **Nómina Final Anonimizada**\n- Respaldos Escaneados y Anonimizados;
 }
 
-partition "Fase 4: El 'Pin-Pon' Interminable del Rework" {
+partition "Fase 5: El 'Pin-Pon' Interminable del Rework" {
     |Sponsor|
     :Recibe y revisa el paquete;
 
