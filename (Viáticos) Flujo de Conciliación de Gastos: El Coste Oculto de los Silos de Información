@@ -57,7 +57,12 @@ partition "Fase 2: La Peregrinación y Arqueología de Datos" {
         Finanzas debe ir a la oficina de Logística
         para cazar la información.
     end note
-    :Recibe el Excel;
+    :Recibe Excel de logística;
+    note right
+        A través de la nómina en Excel, se determinan
+        los números de vale que se deben buscar
+        en la oficina de logística.
+    end note
     :**PEREGRINACIÓN A LOGÍSTICA**;
     :Busca manualmente "Vales" físicos en archivo
     cronológico (todos los estudios mezclados);
